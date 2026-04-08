@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { sm2 } from "@/lib/sm2";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const supabase = getServerSupabase(request.headers.get("authorization"));
   const {
