@@ -1,0 +1,18 @@
+{
+  "subject": "SI Prefixes",
+  "color": "#8b5cf6",
+  "cards": [
+    { "front": "exa (E)", "back": "10^18" },
+    { "front": "peta (P)", "back": "10^15" },
+    { "front": "tera (T)", "back": "10^12" },
+    { "front": "giga (G)", "back": "10^9" },
+    { "front": "mega (M)", "back": "10^6" },
+    { "front": "kilo (k)", "back": "10^3" },
+    { "front": "milli (m)", "back": "10^-3" },
+    { "front": "micro (\u00b5)", "back": "10^-6" },
+    { "front": "nano (n)", "back": "10^-9" },
+    { "front": "pico (p)", "back": "10^-12" },
+    { "front": "femto (f)", "back": "10^-15" },
+    { "front": "atto (a)", "back": "10^-18" }
+  ]
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,8 @@ export default function QuizPage({
   const { subjectId } = use(params);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPublic = searchParams.get("public") === "true";
 
   // Setup state
   const [mode, setMode] = useState<QuizMode>("multiple-choice");
@@ -81,9 +83,9 @@ export default function QuizPage({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) router.push("/login");
-  }, [user, authLoading, router]);
+    if (!isPublic && authLoading) return;
+    if (!isPublic && !user) router.push("/login");
+  }, [user, authLoading, router, isPublic]);
 
   function generateQuestions(
     cards: QuizCard[],
@@ -133,16 +135,33 @@ export default function QuizPage({
   async function startQuiz() {
     setLoading(true);
     try {
-      const data = await apiFetch("/api/quiz/start", {
-        method: "POST",
-        body: JSON.stringify({
-          subjectId,
-          mode,
-          count: parseInt(cardCount),
-        }),
-      });
+      let quizCards: QuizCard[];
+      let allCards: QuizCard[];
+      let effectiveMode = mode;
 
-      const qs = generateQuestions(data.cards, data.allCards, data.mode);
+      if (isPublic) {
+        // Fetch public cards directly
+        const cards = await apiFetch(`/api/cards?subjectId=${subjectId}&public=true`);
+        const shuffled = [...cards].sort(() => Math.random() - 0.5);
+        const count = Math.min(parseInt(cardCount), cards.length);
+        quizCards = shuffled.slice(0, count);
+        allCards = cards;
+        if (mode === "multiple-choice" && cards.length < 4) effectiveMode = "typed";
+      } else {
+        const data = await apiFetch("/api/quiz/start", {
+          method: "POST",
+          body: JSON.stringify({
+            subjectId,
+            mode,
+            count: parseInt(cardCount),
+          }),
+        });
+        quizCards = data.cards;
+        allCards = data.allCards;
+        effectiveMode = data.mode;
+      }
+
+      const qs = generateQuestions(quizCards, allCards, effectiveMode);
       setQuestions(qs);
       setStarted(true);
       setStartTime(Date.now());
@@ -201,19 +220,21 @@ export default function QuizPage({
     const correctCount = answers.filter((a) => a.correct).length;
     const duration = Math.round((Date.now() - startTime) / 1000);
 
-    try {
-      await apiFetch("/api/quiz/submit", {
-        method: "POST",
-        body: JSON.stringify({
-          subjectId,
-          totalCards: questions.length,
-          correctCount,
-          quizMode: mode,
-          durationSeconds: duration,
-        }),
-      });
-    } catch {
-      // save failed, not critical
+    if (user && !isPublic) {
+      try {
+        await apiFetch("/api/quiz/submit", {
+          method: "POST",
+          body: JSON.stringify({
+            subjectId,
+            totalCards: questions.length,
+            correctCount,
+            quizMode: mode,
+            durationSeconds: duration,
+          }),
+        });
+      } catch {
+        // save failed, not critical
+      }
     }
   }
 

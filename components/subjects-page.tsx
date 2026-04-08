@@ -23,7 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 interface Subject {
@@ -33,6 +33,7 @@ interface Subject {
   icon: string;
   cardCount: number;
   dueCount: number;
+  is_public: boolean;
 }
 
 const COLORS = [
@@ -95,6 +96,19 @@ export default function SubjectsPage() {
       toast.error(err instanceof Error ? err.message : "Failed to create subject");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function togglePublic(id: string, currentlyPublic: boolean) {
+    try {
+      await apiFetch(`/api/subjects/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ is_public: !currentlyPublic }),
+      });
+      toast.success(currentlyPublic ? "Set to private" : "Set to public");
+      fetchSubjects();
+    } catch {
+      toast.error("Failed to update visibility");
     }
   }
 
@@ -206,17 +220,33 @@ export default function SubjectsPage() {
                   )}
                 </CardContent>
               </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => {
-                  e.preventDefault();
-                  deleteSubject(subject.id, subject.name);
-                }}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title={subject.is_public ? "Make private" : "Make public"}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    togglePublic(subject.id, subject.is_public);
+                  }}
+                >
+                  {subject.is_public ? (
+                    <Globe className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    deleteSubject(subject.id, subject.name);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
             </Card>
           ))}
         </div>

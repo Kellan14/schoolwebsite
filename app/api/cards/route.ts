@@ -3,14 +3,39 @@ import { getServerSupabase } from "@/lib/supabase-server";
 
 export async function GET(request: Request) {
   const supabase = getServerSupabase(request.headers.get("authorization"));
+  const { searchParams } = new URL(request.url);
+  const subjectId = searchParams.get("subjectId");
+  const publicAccess = searchParams.get("public") === "true";
+
+  if (publicAccess && subjectId) {
+    // Check if subject is public
+    const { data: subject } = await supabase
+      .from("subjects")
+      .select("is_public")
+      .eq("id", subjectId)
+      .single();
+
+    if (!subject?.is_public) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from("cards")
+      .select("*")
+      .eq("subject_id", subjectId)
+      .order("created_at", { ascending: false });
+
+    if (error)
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  }
+
+  // Authenticated access to own cards
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { searchParams } = new URL(request.url);
-  const subjectId = searchParams.get("subjectId");
 
   let query = supabase
     .from("cards")

@@ -19,6 +19,7 @@ import {
   User,
   Moon,
   Sun,
+  Globe,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/subjects", label: "Subjects", icon: FolderOpen },
+  { href: "/browse", label: "Browse", icon: Globe },
   { href: "/progress", label: "Progress", icon: BarChart3 },
 ];
 

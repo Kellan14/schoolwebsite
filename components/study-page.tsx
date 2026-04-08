@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { apiFetch } from "@/lib/api";
 import { Flashcard } from "@/components/flashcard";
@@ -32,6 +32,8 @@ export default function StudyPage({
   const { subjectId } = use(params);
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPublic = searchParams.get("public") === "true";
   const [cards, setCards] = useState<StudyCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -40,15 +42,18 @@ export default function StudyPage({
   const [sessionStats, setSessionStats] = useState({ reviewed: 0, again: 0, good: 0 });
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
+    if (!isPublic && authLoading) return;
+    if (!isPublic && !user) {
       router.push("/login");
       return;
     }
 
     async function fetchCards() {
       try {
-        const data = await apiFetch(`/api/cards?subjectId=${subjectId}`);
+        const url = isPublic
+          ? `/api/cards?subjectId=${subjectId}&public=true`
+          : `/api/cards?subjectId=${subjectId}`;
+        const data = await apiFetch(url);
         // Shuffle
         const shuffled = [...data].sort(() => Math.random() - 0.5);
         setCards(shuffled);
@@ -60,7 +65,7 @@ export default function StudyPage({
     }
 
     fetchCards();
-  }, [user, authLoading, router, subjectId]);
+  }, [user, authLoading, router, subjectId, isPublic]);
 
   const handleRate = useCallback(
     async (label: QualityLabel) => {
@@ -69,14 +74,16 @@ export default function StudyPage({
 
       const quality = QUALITY_MAP[label];
 
-      // Submit review
-      try {
-        await apiFetch("/api/progress/review", {
-          method: "POST",
-          body: JSON.stringify({ cardId: card.id, quality }),
-        });
-      } catch {
-        // continue anyway
+      // Submit review (only for authenticated users studying their own cards)
+      if (user && !isPublic) {
+        try {
+          await apiFetch("/api/progress/review", {
+            method: "POST",
+            body: JSON.stringify({ cardId: card.id, quality }),
+          });
+        } catch {
+          // continue anyway
+        }
       }
 
       setSessionStats((prev) => ({
