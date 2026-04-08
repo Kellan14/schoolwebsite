@@ -18,10 +18,10 @@ interface StudyCard {
 }
 
 const ratingConfig: { label: QualityLabel; display: string; color: string; key: string }[] = [
-  { label: "again", display: "Again", color: "bg-red-500 hover:bg-red-600", key: "1" },
-  { label: "hard", display: "Hard", color: "bg-orange-500 hover:bg-orange-600", key: "2" },
-  { label: "good", display: "Good", color: "bg-green-500 hover:bg-green-600", key: "3" },
-  { label: "easy", display: "Easy", color: "bg-blue-500 hover:bg-blue-600", key: "4" },
+  { label: "again", display: "1", color: "bg-red-500 hover:bg-red-600", key: "1" },
+  { label: "hard", display: "2", color: "bg-orange-500 hover:bg-orange-600", key: "2" },
+  { label: "good", display: "3", color: "bg-green-500 hover:bg-green-600", key: "3" },
+  { label: "easy", display: "4", color: "bg-blue-500 hover:bg-blue-600", key: "4" },
 ];
 
 export default function StudyPage({
@@ -214,9 +214,10 @@ export default function StudyPage({
 
       {flipped && (
         <div className="mt-6 space-y-3">
-          <p className="text-center text-sm text-muted-foreground">
-            How well did you know this? (press 1-4)
-          </p>
+          <div className="flex justify-between text-sm text-muted-foreground px-1">
+            <span>&larr; unknown</span>
+            <span>known &rarr;</span>
+          </div>
           <div className="grid grid-cols-4 gap-2">
             {ratingConfig.map((rating) => (
               <Button

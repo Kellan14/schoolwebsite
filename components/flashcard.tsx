@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface FlashcardProps {
@@ -13,6 +13,19 @@ interface FlashcardProps {
 export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: FlashcardProps) {
   const [internalFlipped, setInternalFlipped] = useState(false);
   const isFlipped = controlledFlipped ?? internalFlipped;
+  const [animate, setAnimate] = useState(true);
+  const prevFrontRef = useRef(front);
+
+  // When the card content changes (new card), disable animation so the
+  // flip back to front is instant — prevents flashing the new answer.
+  useEffect(() => {
+    if (prevFrontRef.current !== front) {
+      setAnimate(false);
+      prevFrontRef.current = front;
+      // Re-enable animation after a frame so the next flip animates
+      requestAnimationFrame(() => setAnimate(true));
+    }
+  }, [front]);
 
   const handleClick = () => {
     if (onFlip) {
@@ -37,8 +50,9 @@ export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: F
     >
       <div
         className={cn(
-          "relative w-full min-h-[250px] transition-transform duration-500",
+          "relative w-full min-h-[250px]",
           "[transform-style:preserve-3d]",
+          animate && "transition-transform duration-500",
           isFlipped && "[transform:rotateY(180deg)]"
         )}
       >
