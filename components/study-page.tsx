@@ -206,6 +206,7 @@ export default function StudyPage({
       </div>
 
       <Flashcard
+        key={currentIndex}
         front={current.front}
         back={current.back}
         flipped={flipped}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface FlashcardProps {
@@ -13,27 +13,6 @@ interface FlashcardProps {
 export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: FlashcardProps) {
   const [internalFlipped, setInternalFlipped] = useState(false);
   const isFlipped = controlledFlipped ?? internalFlipped;
-  // Track whether the back content should be visible — delayed until flip animation starts
-  const [showBack, setShowBack] = useState(false);
-  const prevFrontRef = useRef(front);
-
-  // When card content changes, immediately hide back text
-  useEffect(() => {
-    if (prevFrontRef.current !== front) {
-      setShowBack(false);
-      prevFrontRef.current = front;
-    }
-  }, [front]);
-
-  // Show back content only when flipped
-  useEffect(() => {
-    if (isFlipped) {
-      setShowBack(true);
-    } else {
-      // Hide back text immediately when unflipping
-      setShowBack(false);
-    }
-  }, [isFlipped]);
 
   const handleClick = () => {
     if (onFlip) {
@@ -70,7 +49,7 @@ export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: F
 
         {/* Back */}
         <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl border bg-card p-8 flex items-center justify-center shadow-sm">
-          <p className="text-xl text-center">{showBack ? back : ""}</p>
+          <p className="text-xl text-center">{back}</p>
         </div>
       </div>
       <p className="text-center text-sm text-muted-foreground mt-3">
