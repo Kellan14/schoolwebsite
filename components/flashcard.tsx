@@ -13,19 +13,27 @@ interface FlashcardProps {
 export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: FlashcardProps) {
   const [internalFlipped, setInternalFlipped] = useState(false);
   const isFlipped = controlledFlipped ?? internalFlipped;
-  const [animate, setAnimate] = useState(true);
+  // Track whether the back content should be visible — delayed until flip animation starts
+  const [showBack, setShowBack] = useState(false);
   const prevFrontRef = useRef(front);
 
-  // When the card content changes (new card), disable animation so the
-  // flip back to front is instant — prevents flashing the new answer.
+  // When card content changes, immediately hide back text
   useEffect(() => {
     if (prevFrontRef.current !== front) {
-      setAnimate(false);
+      setShowBack(false);
       prevFrontRef.current = front;
-      // Re-enable animation after a frame so the next flip animates
-      requestAnimationFrame(() => setAnimate(true));
     }
   }, [front]);
+
+  // Show back content only when flipped
+  useEffect(() => {
+    if (isFlipped) {
+      setShowBack(true);
+    } else {
+      // Hide back text immediately when unflipping
+      setShowBack(false);
+    }
+  }, [isFlipped]);
 
   const handleClick = () => {
     if (onFlip) {
@@ -50,9 +58,8 @@ export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: F
     >
       <div
         className={cn(
-          "relative w-full min-h-[250px]",
+          "relative w-full min-h-[250px] transition-transform duration-500",
           "[transform-style:preserve-3d]",
-          animate && "transition-transform duration-500",
           isFlipped && "[transform:rotateY(180deg)]"
         )}
       >
@@ -63,7 +70,7 @@ export function Flashcard({ front, back, flipped: controlledFlipped, onFlip }: F
 
         {/* Back */}
         <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl border bg-card p-8 flex items-center justify-center shadow-sm">
-          <p className="text-xl text-center">{back}</p>
+          <p className="text-xl text-center">{showBack ? back : ""}</p>
         </div>
       </div>
       <p className="text-center text-sm text-muted-foreground mt-3">
